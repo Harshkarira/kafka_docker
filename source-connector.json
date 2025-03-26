@@ -1,9 +1,9 @@
 {
-  "name": "sqlserver-source-3",
+  "name": "sqlserver-source-9",
   "config": {
     "connector.class": "io.confluent.connect.jdbc.JdbcSourceConnector",
     "tasks.max": "1",
-    "connection.url": "jdbc:sqlserver://localhost:1433;databaseName=KafkaDB",
+    "connection.url": "jdbc:sqlserver://mssql:1433;databaseName=KafkaDB;encrypt=false;trustServerCertificate=true",
     "connection.user": "sa",
     "connection.password": "P@ssW0rdS3cuR3!",
     "table.whitelist": "source_table",

@@ -17,7 +17,7 @@ services:
       - mssql-data:/var/opt/mssql
 
   zookeeper:
-    image: confluentinc/cp-zookeeper:7.3.0
+    image: confluentinc/cp-zookeeper:7.4.0
     environment:
       - ZOOKEEPER_CLIENT_PORT=2181
       - ZOOKEEPER_TICK_TIME=2000
@@ -29,7 +29,7 @@ services:
       - zookeeper-data:/var/lib/zookeeper/data
 
   kafka:
-    image: confluentinc/cp-kafka:7.3.0
+    image: confluentinc/cp-kafka:7.4.0
     ports:
       - "9092:9092"
     environment:
@@ -68,22 +68,35 @@ services:
       - CONNECT_INTERNAL_KEY_CONVERTER=org.apache.kafka.connect.json.JsonConverter
       - CONNECT_INTERNAL_VALUE_CONVERTER=org.apache.kafka.connect.json.JsonConverter
       - CONNECT_REST_ADVERTISED_HOST_NAME=kafka-connect
-      - CONNECT_PLUGIN_PATH=/usr/share/java,/usr/share/confluent-hub-components
+      - CONNECT_PLUGIN_PATH=/usr/share/java,/etc/kafka-connect/jars
+    volumes:
+      - ./jars:/etc/kafka-connect/jars
     networks:
       - kafka-network
 
-  kafka-ui:
-    image: provectuslabs/kafka-ui:latest
-    depends_on:
-      - kafka
+  control-center:
+    image: confluentinc/cp-enterprise-control-center:5.0.0
     ports:
-      - "8080:8080"
+      - 9021:9021
+    depends_on:
+      - zookeeper
+      - kafka
     environment:
-      KAFKA_CLUSTERS_0_NAME: local
-      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
-      KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
-    volumes:
-      - kafka-ui:/var/lib/kafka-ui/data
+      CONTROL_CENTER_BOOTSTRAP_SERVERS: kafka:9092
+      CONTROL_CENTER_ZOOKEEPER_CONNECT: zookeeper:2181
+      CONTROL_CENTER_CONNECT_CLUSTER: kafka-connector-mssql
+      CONTROL_CENTER_INTERNAL_TOPICS_PARTITIONS: 1
+      CONTROL_CENTER_MONITORING_INTERCEPTOR_TOPIC_PARTITIONS: 1
+      CONTROL_CENTER_GROUP_TOPIC_PARTITIONS: 1
+      CONTROL_CENTER_INTERNAL_TOPIC_REPLICATION: 1
+      CONTROL_CENTER_COMMAND_TOPIC_REPLICATION: 1
+      CONTROL_CENTER_CONTROL_TOPIC_REPLICATION: 1
+      CONTROL_CENTER_SAFETY_VALVE_TOPIC_REPLICATION: 1
+      CONTROL_CENTER_ZOOKEEPER_TIMEOUT_MS: 10000
+      CONTROL_CENTER_ZOOKEEPER_CONNECT_TIMEOUT_MS: 10000
+      CONTROL_CENTER_REPLICATION_FACTOR: 1
+    networks:
+      - kafka-network
 
 secrets:
   mssql_password:
@@ -96,5 +109,4 @@ networks:
 volumes:
   mssql-data:         
   zookeeper-data:
-  kafka-data:          
-  kafka-ui: 
+  kafka-data:
